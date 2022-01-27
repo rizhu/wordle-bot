@@ -1,11 +1,14 @@
 import string
 
 WORD_LEN = 5
+EXPLORATION_PUNISHMENT = 0.000001
 ALPHABET = list(string.ascii_lowercase)
+EXPLOIT_THRESHOLD = 0.006
+DECAY = 0.1
 
 def main():
-    with open("words.txt", "r") as words:
-        sgb = words.read().splitlines()
+    with open("sgb.txt", "r") as words:
+        allowed_guesses = words.read().splitlines()
 
     possibles = []
     for i in range(WORD_LEN):
@@ -13,97 +16,137 @@ def main():
 
     turn = 1
     guess = ""
+    threshold = EXPLOIT_THRESHOLD
+
+
     exists = set()
+    not_exists = set()
+    explored = set()
 
-    while turn < 7:
-        global_probs = {}
-        local_probs = [{} for _ in range(WORD_LEN)]
-        
-        build_probs(sgb, possibles, global_probs, local_probs)
-        guess_global, guess_global_prob, guess_local, guess_local_prob = best_words(sgb, possibles, global_probs, local_probs)
+    print("Inputs are CASE-INSENSITIVE")
+    print()
 
-        print(f"Guesses for turn {turn}")
-        print(f"Best global guess: {guess_global.upper()} with p = {guess_global_prob}")
-        print(f"Best local guess: {guess_local.upper()} with p = {guess_local_prob}")
+    while True:
+        guess_explore, guess_explore_score, guess_exploit, guess_exploit_prob = make_guesses(allowed_guesses, possibles, exists, not_exists, explored)
 
-        if guess_local_prob < 1:
-            guess = input("GUESS: ").lower()
-            colors = input("COLORS (G/Y/B): ").lower()
+        if guess_exploit_prob >= EXPLOIT_THRESHOLD:
+            guess = guess_exploit
+            print(f"Exploiting on turn {turn} with p = {guess_exploit_prob}.", end=" ")
         else:
-            guess = guess_local
+            guess = guess_explore
+            print(f"Exploring on turn {turn}.", end=" ")
+        print(f"Guess: {guess.upper()}")
+
+        if guess_exploit_prob < 1:
+            while ((colors := input("COLORS (G/Y/B): ").lower()) and not valid_colors(colors)):
+                pass
+        else:
             colors = "g" * WORD_LEN
 
         if colors == "g" * WORD_LEN:
-            print(f"Won on turn {turn} with {guess_local.upper()}")
+            print()
+            print(f"WON on turn {turn} with {guess.upper()}")
+            print()
             break
 
-        adjust_possibles(guess, colors, possibles, exists)
+        update_info(guess, colors, possibles, exists, not_exists, explored)
 
         turn += 1
+        threshold = threshold * DECAY
+        print()
 
-
-def matches(word, possibles):
-    for i in range(WORD_LEN):
-        if word[i] not in possibles[i]:
+def valid_colors(colors):
+    if len(colors) != WORD_LEN:
+        return False
+    for letter in colors:
+        if letter != "g" and letter != "y" and letter != "b":
             return False
     return True
 
-def build_probs(words, possibles, global_probs, local_probs):
-    global_total = 0
-    local_totals = [0 for _ in range(WORD_LEN)]
+def make_guesses(words, possibles, exists, not_exists, explored):
+    letter_probs = {}
+    position_probs = [{} for _ in range(WORD_LEN)]
+    
+    build_probs(words, possibles, exists, not_exists, letter_probs, position_probs)
+
+    return best_words(words, possibles, exists, not_exists, explored, letter_probs, position_probs)
+
+def can_explore(word, not_exists):
+    for c in word:
+        if c in not_exists:
+            return False
+    return True
+
+def matches(word, possibles, exists):
+    remaining = set(exists)
+    for i, letter in enumerate(word):
+        if letter not in possibles[i]:
+            return False
+        remaining.discard(letter)
+    return len(remaining) == 0
+
+def build_probs(words, possibles, exists, not_exists, letter_probs, position_probs):
+    total_letters = 0
+    position_totals = [0 for _ in range(WORD_LEN)]
 
     for word in words:
-        if matches(word, possibles):
+        if can_explore(word, not_exists):
             for i in range(WORD_LEN):
-                global_probs[word[i]] = global_probs.get(word[i], 0) + 1
-                global_total += 1
-
-                local_probs[i][word[i]] = local_probs[i].get(word[i], 0) + 1
-                local_totals[i] += 1
+                letter_probs[word[i]] = letter_probs.get(word[i], 0) + 1
+                total_letters += 1
+        if matches(word, possibles, exists):
+            for i in range(WORD_LEN):
+                position_probs[i][word[i]] = position_probs[i].get(word[i], 0) + 1
+                position_totals[i] += 1
 
     for letter in ALPHABET:
-        global_probs[letter] = global_probs.get(letter, 0) / global_total
+        letter_probs[letter] = letter_probs.get(letter, 0) / total_letters
         for i in range(WORD_LEN):
-            local_probs[i][letter] = local_probs[i].get(letter, 0) / local_totals[i]
+            position_probs[i][letter] = position_probs[i].get(letter, 0) / position_totals[i]
 
-def word_prob_global(word, global_probs):
+def word_score_explore(word, letter_probs, explored, possibles):
     res = 1
     seen = set()
-    for c in word:
+    for i, c in enumerate(word):
+        res = res * letter_probs[c]
+
+        if c in explored:
+            res = res * EXPLORATION_PUNISHMENT
         if c in seen:
-            return 0
-        else:
-            seen.add(c)
-        res = res * global_probs[c]
+            res = res * EXPLORATION_PUNISHMENT
+
+        seen.add(c)
     return res
 
-def word_prob_local(word, local_probs):
+def word_prob(word, position_probs):
     res = 1
     for i in range(WORD_LEN):
-        res = res * local_probs[i][word[i]]
+        res = res * position_probs[i][word[i]]
     return res
 
-def best_words(words, possibles, global_probs, local_probs):
-    res_global = ""
-    res_local = ""
-    max_prob_global = 0
-    max_prob_local = 0
+def best_words(words, possibles, exists, not_exists, explored, letter_probs, position_probs):
+    res_explore = ""
+    res_prob = ""
+    max_explore_score = -1
+    max_prob = -1
     for word in words:
-        if matches(word, possibles):
-            prob = word_prob_global(word, global_probs)
-            if prob > max_prob_global:
-                res_global = word
-                max_prob_global = prob
+        if can_explore(word, not_exists):
+            explore_score = word_score_explore(word, letter_probs, explored, possibles)
+            if explore_score > max_explore_score or (explore_score == max_explore_score and word_prob(word, position_probs) > word_prob(res_explore, position_probs)):
+                res_explore = word
+                max_explore_score = explore_score
 
-            prob = word_prob_local(word, local_probs)
-            if prob > max_prob_local:
-                res_local = word
-                max_prob_local = prob
-    return res_global, max_prob_global, res_local, max_prob_local
+        if matches(word, possibles, exists):
+            prob = word_prob(word, position_probs)
+            if prob > max_prob:
+                res_prob = word
+                max_prob = prob
+    return res_explore, max_explore_score, res_prob, max_prob
 
-def adjust_possibles(guess, colors, possibles, exists):
+def update_info(guess, colors, possibles, exists, not_exists, explored):
     for i in range(WORD_LEN):
         letter, color = guess[i], colors[i]
+        explored.add(letter)
 
         if color == "g":
             possibles[i] = set([letter])
@@ -115,6 +158,7 @@ def adjust_possibles(guess, colors, possibles, exists):
             if letter in exists:
                 possibles[i].discard(letter)
             else:
+                not_exists.add(letter)
                 for j in range(WORD_LEN):
                     possibles[j].discard(letter)
 
