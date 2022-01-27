@@ -2094,7 +2094,6 @@ gorge
 gorse
 goths
 gotta
-gouda
 gouge
 gourd
 gouts
@@ -3438,7 +3437,6 @@ orbit
 orcas
 order
 organ
-oring
 orlon
 ortho
 osier
