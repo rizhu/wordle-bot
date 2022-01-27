@@ -19,7 +19,7 @@ python bot.py
 
 ## Statistics of current hyperparameters
 
-**Average number of guesses used: 3.950819672**
+**Average number of guesses used: 3.93442623**
 
 ### Guess Frequencies
 |Guesses Used|Frequency|
@@ -27,9 +27,9 @@ python bot.py
 |1|0|
 |2|3|
 |3|37|
-|4|52|
+|4|53|
 |5|24|
-|6|7|
+|6|6|
 
 ### Game History
 **Day**|**Guesses Used**|**Solved?**
@@ -109,7 +109,7 @@ Day 151 - 11/17/2021|3|✅
 Day 150 - 11/16/2021|6|✅
 Day 149 - 11/15/2021|4|✅
 Day 148 - 11/14/2021|3|✅
-Day 147 - 11/13/2021|6|✕
+Day 147 - 11/13/2021|4|✅
 Day 146 - 11/12/2021|4|✅
 Day 145 - 11/11/2021|3|✅
 Day 144 - 11/10/2021|4|✅
