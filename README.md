@@ -19,16 +19,16 @@ python bot.py
 
 ## Statistics of current hyperparameters
 
-**Average number of guesses used: 3.918699187**
+**Average number of guesses used: 3.950819672**
 
 ### Guess Frequencies
 |Guesses Used|Frequency|
 |---------|---------|
 |1|0|
 |2|3|
-|3|36|
-|4|51|
-|5|21|
+|3|37|
+|4|52|
+|5|24|
 |6|7|
 
 ### Game History
