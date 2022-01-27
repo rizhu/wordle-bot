@@ -1,6 +1,6 @@
 # wordle-bot
 
-Automated [Wordle](https://www.powerlanguage.co.uk/wordle/) player that does not use Wordle source in any way. Uses a modified version of [The Stanford GraphBase's](https://www-cs-faculty.stanford.edu/~knuth/sgb.html) list of 5-letter words. Words are removed from `sgb.txt` on the fly as invalid words are discovered.
+Automated [Wordle](https://www.powerlanguage.co.uk/wordle/) bot that does not use Wordle page source (e.g. the future solutions list and allowed guesses list found on the Wordle site) in any way. Uses a modified version of [The Stanford GraphBase's](https://www-cs-faculty.stanford.edu/~knuth/sgb.html) list of 5-letter words. Words are removed from `sgb.txt` on the fly as invalid words are discovered.
 
 ## Description
 
