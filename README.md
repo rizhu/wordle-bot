@@ -25,11 +25,11 @@ python bot.py
 |Guesses Used|Frequency|
 |---------|---------|
 |1|0|
-|2|0|
-|3|17|
-|4|16|
-|5|5|
-|6|2|
+|2|3|
+|3|36|
+|4|51|
+|5|21|
+|6|7|
 
 ### Game History
 | Day                  | Guesses Used | Solved? |
