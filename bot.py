@@ -11,30 +11,33 @@ def main():
     for i in range(WORD_LEN):
         possibles.append(set(ALPHABET))
 
-    won = False
     turn = 1
     guess = ""
+    exists = set()
 
-    global_probs = {}
-    local_probs = [{} for _ in range(WORD_LEN)]
-
-    while turn < 7 and not won:
-        if turn == 1:
-            guess_global = "soare"
-            guess_global_prob = 1
-            guess_local = "soare"
-            guess_local_prob = 1
-        else:
-            build_probs(sgb, possibles, global_probs, local_probs)
-            guess_global, guess_global_prob, guess_local, guess_local_prob = best_words(sgb, possibles, global_probs, local_probs)
+    while turn < 7:
+        global_probs = {}
+        local_probs = [{} for _ in range(WORD_LEN)]
+        
+        build_probs(sgb, possibles, global_probs, local_probs)
+        guess_global, guess_global_prob, guess_local, guess_local_prob = best_words(sgb, possibles, global_probs, local_probs)
 
         print(f"Guesses for turn {turn}")
         print(f"Best global guess: {guess_global.upper()} with p = {guess_global_prob}")
         print(f"Best local guess: {guess_local.upper()} with p = {guess_local_prob}")
 
-        response = input("?> ").lower().split() # "SY OG AB RB EY"
+        if guess_local_prob < 1:
+            guess = input("GUESS: ").lower()
+            colors = input("COLORS (G/Y/B): ").lower()
+        else:
+            guess = guess_local
+            colors = "g" * WORD_LEN
 
-        adjust_possibles(response, possibles)
+        if colors == "g" * WORD_LEN:
+            print(f"Won on turn {turn} with {guess_local.upper()}")
+            break
+
+        adjust_possibles(guess, colors, possibles, exists)
 
         turn += 1
 
@@ -98,17 +101,22 @@ def best_words(words, possibles, global_probs, local_probs):
                 max_prob_local = prob
     return res_global, max_prob_global, res_local, max_prob_local
 
-def adjust_possibles(response, possibles):
+def adjust_possibles(guess, colors, possibles, exists):
     for i in range(WORD_LEN):
-        letter, indicator = response[i][0], response[i][1]
+        letter, color = guess[i], colors[i]
 
-        if indicator == "g":
+        if color == "g":
             possibles[i] = set([letter])
-        if indicator == "y":
+            exists.add(letter)
+        elif color == "y":
             possibles[i].discard(letter)
-        if indicator == "b":
-            for j in range(WORD_LEN):
-                possibles[j].discard(letter)
+            exists.add(letter)
+        elif color == "b":
+            if letter in exists:
+                possibles[i].discard(letter)
+            else:
+                for j in range(WORD_LEN):
+                    possibles[j].discard(letter)
 
 if __name__ == "__main__":
     main()
