@@ -19,7 +19,7 @@ python bot.py
 
 ## Statistics of current hyperparameters
 
-**Average number of guesses used: 3.93442623**
+**Average number of guesses used: 3.943548387**
 
 ### Guess Frequencies
 |Guesses Used|Frequency|
@@ -27,13 +27,14 @@ python bot.py
 |1|0|
 |2|3|
 |3|37|
-|4|53|
+|4|54|
 |5|24|
 |6|6|
 
 ### Game History
 **Day**|**Guesses Used**|**Solved?**
 :-----:|:-----:|:-----:
+Day 223 - 01/28/2022|4|✅
 Day 222 - 01/27/2022|5|✅
 Day 221 - 01/26/2022|5|✅
 Day 220 - 01/25/2022|3|✅
